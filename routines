@@ -1,0 +1,165 @@
+#!/bin/bash
+#
+# Routines
+#
+# Bash script to add funcitonality to todo.txt cli by Gina Trapani. Routines
+# are intended to be specific todo items that re-occur on a given frequency.
+# This plugin overrides the default task listings and will filter out 'routine'
+# items that have already been completed for their context / frequency.  For
+# example if you tag a task with the @weekly context and then mark it as complete
+# it will not show up on your task list until next Monday.
+#
+# Routines are stored by creating reserved contexts.
+#    @daily
+#    @weekly
+#    @monthly
+#    @quarterly
+#    @yearly
+#    @mondays
+#    @tuesdays
+#    @wednesdays
+#    @thursdays
+#    @fridays
+#    @saturdays
+#    @sundays
+#    @everyotherday | @eod
+#
+# Author(s): Cody Buell
+#
+# Licensing: GPL, http://www.gnu.org/copyleft/gpl.html
+#
+# Revisions: 2017.01.12 Framework roughed out.
+#
+# Requisite: todo.sh by Gina Trapanni
+#
+# Resources: https://github.com/ginatrapani/todo.txt-cli/wiki
+#
+# Task List:
+
+###################
+# Usage Functions #
+###################
+
+usage() {
+  cat <<-ENDOFUSAGE
+
+	  Routines:
+	    Displays from or adds Most Important Tasks (MIT) to todo.txt file.
+
+	    $(basename $0) [-h|--help] [-v|--version] [date|day task] [rm ID]
+	        [not @context|@context] [mv ID DATE|DAY]
+
+	    -h, --help      Displays help message.
+	    -v, --version   Displays version information.
+
+	    mit DATE|DAY task
+	      DATE must be in the format of YYYY.MM.DD.
+	      DAY can be full or short day names, today or tomorrow.
+
+	    mit rm ID
+	      Convert the MIT identified by ID to a standard task.
+
+	    mit not @context|@context
+	      Displays all MIT's not in or in specified context.
+
+	    mit mv ID DATE|DAY
+	      Move the MIT identified by ID to a new day.
+	      DATE must be in the format of YYYY.MM.DD.
+	      DAY can be full or short day names, today or tomorrow.
+
+	    mit wed upload code to github
+	      Creates a new MIT for next Wednesday unless the current day
+	      is Wednesday in which case it will be created for today.
+
+	ENDOFUSAGE
+  exit
+}
+
+error() {
+  echo "error: $1"
+  echo "usage: $(basename $0) [-hv] [date|day task] [not @context|@context] [mv ID DATE|DAY]"
+}
+
+version() {
+  echo "mit version $VERSION"
+}
+
+####################
+# Helper Funcitons #
+####################
+
+##################
+# Core Functions #
+##################
+
+
+#######################
+# Establish Variables #
+#######################
+
+if date -v 1d > /dev/null 2>&1; then    # detect date version in use
+  DVER="BSD"                            # set as bsd date
+else                                    # if it isn't bsd then...
+  DVER="GNU"                            # set as gnu date
+fi
+
+if sed --version > /dev/null 2>&1; then # detect sed version in use
+  SEDI="sed -i "                        # set as gnu sed syntax
+else                                    # if it isn't gnu then...
+  SEDI="sed -i '' "                     # set as bsd sed syntax
+fi
+
+VERSION="1.0"                           # mit version number
+ACTION=$1                               # set first argument to action
+
+shift                                   # shift arguments
+
+################
+# Long Options #
+################
+
+# display usage
+[ "$ACTION" = "usage" ] || [ x"$1" = x"--help" ] && {
+  usage
+  exit
+}
+
+# display version
+[ x"$1" = x"--version" ] && {
+  version
+  exit
+}
+
+# list all routines
+[ x"$1" = x"routines" ] && {
+  moveMIT $2 $3
+}
+
+#################
+# Short Options #
+#################
+
+while getopts ":hv" Option; do
+  case $Option in
+    h ) 
+      usage
+      exit
+      ;;  
+    v ) 
+      version
+      exit
+      ;;  
+    : ) 
+      echo "Option -$OPTARG requires an argument." >&2
+      exit
+      ;;
+  esac
+done
+
+##########
+# Run It #
+##########
+
+echo 'routines'
+#"$TODO_SH" command list
+"$TODO_SH"
